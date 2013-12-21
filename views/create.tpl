@@ -50,7 +50,7 @@
 
     <div class="container">
 
-      <form method="post" action="/create" id="form" enctype="multipart/form-data" class="form-horizontal">
+      <form method="post" action="/push/test" id="form" enctype="multipart/form-data" class="form-horizontal">
       <fieldset>
         <legend>
             测试 Push：

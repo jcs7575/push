@@ -41,8 +41,6 @@ type IndexController struct {
 func (this *IndexController) Get() {
 	var r *http.Request = this.Ctx.Request
 	r.ParseForm()
-
-	this.Data["username"] = r.Form["username"][0]
 	this.TplNames = "home.tpl"
 }
 
@@ -125,6 +123,7 @@ func (this *TestController) Post() {
 
 	rs := sendPush(id, "md", url, disType, pushType, title, subTitle)
 	this.Data["result"] = rs
+
 	this.TplNames = "success.tpl"
 }
 
@@ -174,7 +173,7 @@ func sendPush(id string, channel string, content string, disType string, pushTyp
 	response, err := http.PostForm(pushurl, url.Values{"data": {data}, "did": {udid}, "uid": {uid}, "duration": {"21600"}, "destType": {"PHOENIX"}, "type": {"COMMON"}, "channel": {channel}})
 	if err != nil {
 		fmt.Println(err)
-		return "error"
+		return err.Error()
 	}
 	defer response.Body.Close()
 	body, err := ioutil.ReadAll(response.Body)

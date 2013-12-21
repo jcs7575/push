@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <link href="static/css/bootstrap.css" rel="stylesheet">
-    
+
      <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://code.jquery.com/jquery.js"></script>
     <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
@@ -49,7 +49,7 @@
 
       <form method="post" action="/push/create" id="form" enctype="multipart/form-data" class="form-horizontal">
       <div class="alert alert-info">
-            <strong><h1>{{.result}}</h1></strong> 
+            <strong><h1>{{.result}}</h1></strong>
       </div>
       <div class="alert alert-error">
       	<strong><h1>{{.errors}}</h1></strong>
