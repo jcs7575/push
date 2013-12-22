@@ -16,12 +16,13 @@ import (
 	"time"
 )
 
-var dburl, pushurl, batchpushurl string
+var dburl, pushurl, batchpushurl, filepath string
 
 func init() {
 	dburl = beego.AppConfig.String("mysqlurl")
 	pushurl = beego.AppConfig.String("pushurl")
 	batchpushurl = beego.AppConfig.String("batchpushurl")
+	filepath = beego.AppConfig.String("filepath")
 }
 
 type MainController struct {
@@ -60,9 +61,8 @@ func (this *IndexController) Post() {
 		this.Data["fileInputErr"] = "请选择文件"
 		return
 	}
-	var path string = "/Users/Jerry/Desktop/"
 	newFileName := fmt.Sprint(time.Now().Unix())
-	f, err := os.OpenFile(path+newFileName, os.O_WRONLY|os.O_CREATE, 0666)
+	f, err := os.OpenFile(filepath+newFileName, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		fmt.Println(err)
 		this.Data["errors"] = "出错鸟"
@@ -75,7 +75,7 @@ func (this *IndexController) Post() {
 	var record PushRecord
 	record.Title = title
 	record.SubTitle = subTitle
-	record.FilePath = path + newFileName
+	record.FilePath = filepath + newFileName
 	record.ContentUrl = r.FormValue("url")
 	record.PushType = pushType
 	record.DisType = r.FormValue("disType")
@@ -122,7 +122,11 @@ func (this *TestController) Post() {
 	var url string = r.FormValue("url")
 
 	rs := sendPush(id, "md", url, disType, pushType, title, subTitle)
-	this.Data["result"] = rs
+	if rs != "{\"data\":\"\",\"error\":0}" {
+		this.Data["result"] = rs
+	} else {
+		this.Data["result"] = "测试成功"
+	}
 
 	this.TplNames = "success.tpl"
 }
@@ -169,7 +173,7 @@ func sendPush(id string, channel string, content string, disType string, pushTyp
 		uid = id
 	}
 	data := applyParams(id, channel, content, disType, pushType, title, subTitle)
-
+	fmt.Println(data, udid, uid, channel)
 	response, err := http.PostForm(pushurl, url.Values{"data": {data}, "did": {udid}, "uid": {uid}, "duration": {"21600"}, "destType": {"PHOENIX"}, "type": {"COMMON"}, "channel": {channel}})
 	if err != nil {
 		fmt.Println(err)
@@ -191,7 +195,7 @@ func applyParams(id string, channel string, content string, disType string, push
 	}
 	var intent string = ""
 	var page string = ""
-	if disType == "" {
+	if disType == "url" {
 		page = content
 	} else {
 		intent = content
@@ -253,7 +257,13 @@ func queryPushRecord() []PushRecord {
 
 func sendFileToPush(filePath string, channel string, data string, startDate time.Time, endDate time.Time) string {
 	fmt.Println(batchpushurl)
-	cmd := exec.Command("ls", "-l", "-h", "-G")
+	v := url.Values{}
+	v.Set("data", data)
+	v.Encode()
+	encode_data := strings.Replace(v.Get("data"), "data=", "", -1)
+	fmt.Println(encode_data)
+
+	cmd := exec.Command("curl", "-F", "dids=@{"+filePath+"}", batchpushurl+"?channel=${"+channel+"}&data=${"+encode_data+"}&destType=PHOENIX&startDate="+convertDate(startDate)+"&endDate="+convertDate(endDate))
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err := cmd.Run()
@@ -261,4 +271,8 @@ func sendFileToPush(filePath string, channel string, data string, startDate time
 		return "error"
 	}
 	return strings.Replace(out.String(), "\n", "", -1)
+}
+func convertDate(oriDate time.Time) string {
+	s := oriDate.String()
+	return s[0:4] + s[5:7] + s[8:10] + s[11:13] + "0000"
 }
