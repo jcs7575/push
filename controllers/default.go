@@ -89,7 +89,7 @@ func (this *IndexController) Post() {
 		return
 	}
 	record.PushDate = pushTimeValue
-	data := ""
+	data := applyParams("", record.Channel, record.ContentUrl, record.DisType, record.PushType, record.Title, record.SubTitle)
 	pushResult := sendFileToPush(record.FilePath, record.Channel, data, pushTimeValue, pushTimeValue.Add(3*24*time.Hour))
 	record.Comments = pushResult
 
@@ -256,18 +256,18 @@ func queryPushRecord() []PushRecord {
 }
 
 func sendFileToPush(filePath string, channel string, data string, startDate time.Time, endDate time.Time) string {
-	fmt.Println(batchpushurl)
 	v := url.Values{}
 	v.Set("data", data)
-	v.Encode()
-	encode_data := strings.Replace(v.Get("data"), "data=", "", -1)
-	fmt.Println(encode_data)
+	s := v.Encode()
+	encode_data := strings.Replace(s, "data=", "", -1)
 
-	cmd := exec.Command("curl", "-F", "dids=@{"+filePath+"}", batchpushurl+"?channel=${"+channel+"}&data=${"+encode_data+"}&destType=PHOENIX&startDate="+convertDate(startDate)+"&endDate="+convertDate(endDate))
+	cmd := exec.Command("curl", "-F", "dids=@"+filePath+"", batchpushurl+"?channel="+channel+"&data="+encode_data+"&destType=PHOENIX&startDate="+convertDate(startDate)+"&endDate="+convertDate(endDate))
+	fmt.Println("curl args : ", cmd.Args)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err := cmd.Run()
 	if err != nil {
+		fmt.Println(err)
 		return "error"
 	}
 	return strings.Replace(out.String(), "\n", "", -1)
